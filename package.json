@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server",
     "dev": "nodemon server",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ts:check": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +25,15 @@
     "slugify": "^1.6.5"
   },
   "devDependencies": {
-    "nodemon": "^2.0.20"
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/mongoose": "^5.11.96",
+    "@types/node": "^25.9.2",
+    "nodemon": "^2.0.20",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
   }
 }
