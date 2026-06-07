@@ -52,26 +52,15 @@ Check `package.json` for `"type": "module"` and `tsconfig.json` for the `"module
 - **CommonJS project**: keep `require()` and `module.exports` syntax, or convert if the tsconfig targets CommonJS output — either is fine, be consistent with the rest of the codebase
 - **Mixed / unclear**: match what neighbouring `.ts` files in the project are doing; note your choice in the report
 
-## Step 4: Config check
-
-Check for a `tsconfig.json` at or above the file's directory.
-
-- **No tsconfig found**: create a minimal one at the project root with `"strict": true`. Strict mode is what makes the no-`any` policy enforceable.
-- **Tsconfig exists, `strict` is false or absent**: flag it to the user. Do not change it without asking — they may have deliberate reasons. Note that without strict mode, some of your `unknown` annotations may behave differently.
-- **Tsconfig exists with `strict: true`**: nothing to do.
-
-## Step 5: Replace the file
+## Step 4: Replace the file
 
 1. Write the converted content to `<filename>.ts`
 2. Delete `<filename>.js`
 
-## Step 6: Report
+Run `npm run ts:check` to confirm
 
-Summarise what you did:
+## Step 5: Wrap up
 
-- File converted and where it now lives
-- Interfaces and type aliases you defined (name and purpose)
-- Type guards you wrote (name and what they narrow)
-- Every place you used `unknown` and what assertion follows it
-- Any `tsconfig.json` action taken
-- Any files that import the converted file that you did not update (updating dependents is out of scope — flag them so the user knows what may break at compile time)
+Ensure newly created and deleted files are tracked by git. Commit with a straightforward message listing the files converted.
+
+Output a brief list of files converted and highlight any uses of "unknown" type
