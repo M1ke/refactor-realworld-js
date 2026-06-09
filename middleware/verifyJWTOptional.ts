@@ -2,11 +2,12 @@ import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import { isJwtUserPayload } from '../types/jwt';
 
-const verifyJWT = (req: Request, res: Response, next: NextFunction): void => {
+const verifyJWTOptional = (req: Request, res: Response, next: NextFunction): void => {
     const authHeader = (req.headers.authorization || req.headers.Authorization) as string | undefined;
 
-    if (!authHeader?.startsWith('Token ')) {
-        res.status(401).json({ message: 'Unauthorized' });
+    if (!authHeader || !authHeader.startsWith('Token ') || !authHeader.split(' ')[1].length) {
+        req.loggedin = false;
+        next();
         return;
     }
 
@@ -32,6 +33,7 @@ const verifyJWT = (req: Request, res: Response, next: NextFunction): void => {
                 return;
             }
 
+            req.loggedin = true;
             req.userId = decoded.user.id;
             req.userEmail = decoded.user.email;
             req.userHashedPwd = decoded.user.password;
@@ -40,4 +42,4 @@ const verifyJWT = (req: Request, res: Response, next: NextFunction): void => {
     );
 };
 
-export default verifyJWT;
+export default verifyJWTOptional;
