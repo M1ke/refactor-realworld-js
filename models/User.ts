@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
-const uniqueValidator = require('mongoose-unique-validator');
-const jwt = require("jsonwebtoken");
+import { Schema, model, Document, Types } from 'mongoose';
+import * as uniqueValidator from 'mongoose-unique-validator';
+import * as jwt from 'jsonwebtoken';
 
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema({
     username: {
         type: String,
         required: true,
@@ -30,11 +30,11 @@ const userSchema = new mongoose.Schema({
         default: "https://static.productionready.io/images/smiley-cyrus.jpg"
     },
     favouriteArticles: [{
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Article'
     }],
     followingUsers: [{
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User'
     }]
 },
@@ -46,7 +46,7 @@ userSchema.plugin(uniqueValidator);
 
 // @desc generate access token for a user
 // @required valid email and password
-userSchema.methods.generateAccessToken = function() {
+userSchema.methods.generateAccessToken = function (this: UserDocument): string {
     const accessToken = jwt.sign({
             "user": {
                 "id": this._id,
@@ -54,13 +54,13 @@ userSchema.methods.generateAccessToken = function() {
                 "password": this.password
             }
         },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: "1d"}
+        process.env.ACCESS_TOKEN_SECRET as string,
+        { expiresIn: "1d" }
     );
     return accessToken;
 }
 
-userSchema.methods.toUserResponse = function() {
+userSchema.methods.toUserResponse = function (this: UserDocument) {
     return {
         username: this.username,
         email: this.email,
@@ -70,7 +70,7 @@ userSchema.methods.toUserResponse = function() {
     }
 };
 
-userSchema.methods.toProfileJSON = function (user) {
+userSchema.methods.toProfileJSON = function (this: UserDocument, user?: UserDocument) {
     return {
         username: this.username,
         bio: this.bio,
@@ -79,7 +79,7 @@ userSchema.methods.toProfileJSON = function (user) {
     }
 };
 
-userSchema.methods.isFollowing = function (id) {
+userSchema.methods.isFollowing = function (this: UserDocument, id: Types.ObjectId): boolean {
     const idStr = id.toString();
     for (const followingUser of this.followingUsers) {
         if (followingUser.toString() === idStr) {
@@ -89,21 +89,21 @@ userSchema.methods.isFollowing = function (id) {
     return false;
 };
 
-userSchema.methods.follow = function (id) {
-    if(this.followingUsers.indexOf(id) === -1){
+userSchema.methods.follow = function (this: UserDocument, id: Types.ObjectId) {
+    if (this.followingUsers.indexOf(id) === -1) {
         this.followingUsers.push(id);
     }
     return this.save();
 };
 
-userSchema.methods.unfollow = function (id) {
-    if(this.followingUsers.indexOf(id) !== -1){
+userSchema.methods.unfollow = function (this: UserDocument, id: Types.ObjectId) {
+    if (this.followingUsers.indexOf(id) !== -1) {
         this.followingUsers.remove(id);
     }
     return this.save();
 };
 
-userSchema.methods.isFavourite = function (id) {
+userSchema.methods.isFavourite = function (this: UserDocument, id: Types.ObjectId): boolean {
     const idStr = id.toString();
     for (const article of this.favouriteArticles) {
         if (article.toString() === idStr) {
@@ -113,8 +113,8 @@ userSchema.methods.isFavourite = function (id) {
     return false;
 }
 
-userSchema.methods.favorite = function (id) {
-    if(this.favouriteArticles.indexOf(id) === -1){
+userSchema.methods.favorite = function (this: UserDocument, id: Types.ObjectId) {
+    if (this.favouriteArticles.indexOf(id) === -1) {
         this.favouriteArticles.push(id);
     }
 
@@ -127,8 +127,8 @@ userSchema.methods.favorite = function (id) {
     return this.save();
 }
 
-userSchema.methods.unfavorite = function (id) {
-    if(this.favouriteArticles.indexOf(id) !== -1){
+userSchema.methods.unfavorite = function (this: UserDocument, id: Types.ObjectId) {
+    if (this.favouriteArticles.indexOf(id) !== -1) {
         this.favouriteArticles.remove(id);
     }
 
@@ -141,4 +141,35 @@ userSchema.methods.unfavorite = function (id) {
     return this.save();
 };
 
-module.exports = mongoose.model('User', userSchema);
+// Instance-method type augmentation
+interface UserDocument extends Document {
+    username: string;
+    password: string;
+    email: string;
+    bio: string;
+    image: string;
+    favouriteArticles: Types.Array<Types.ObjectId>;
+    followingUsers: Types.Array<Types.ObjectId>;
+    generateAccessToken(): string;
+    toUserResponse(): {
+        username: string;
+        email: string;
+        bio: string;
+        image: string;
+        token: string;
+    };
+    toProfileJSON(user?: UserDocument): {
+        username: string;
+        bio: string;
+        image: string;
+        following: boolean;
+    };
+    isFollowing(id: Types.ObjectId): boolean;
+    follow(id: Types.ObjectId): Promise<UserDocument>;
+    unfollow(id: Types.ObjectId): Promise<UserDocument>;
+    isFavourite(id: Types.ObjectId): boolean;
+    favorite(id: Types.ObjectId): Promise<UserDocument>;
+    unfavorite(id: Types.ObjectId): Promise<UserDocument>;
+}
+
+export = model<UserDocument>('User', userSchema);
